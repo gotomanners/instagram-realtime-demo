@@ -58,7 +58,7 @@ app.post('/callback', function(request, response){
     https.get({
       host: 'api.instagram.com',
       path: '/v1/geographies/' + notificationOjb.object_id + '/media/recent' +
-      '?' + querystring.stringify({client_id: process.env.instagram_client_id,count: 1}),
+      '?' + querystring.stringify({client_id: '8f887b841c774e6cb9b8e5b7b3c9c663',count: 1})
     }, function(res){
       var raw = "";
 
@@ -71,7 +71,7 @@ app.post('/callback', function(request, response){
       // If so, the photo is emitted through the websocket
       res.on('end', function() {
         var response = JSON.parse(raw);
-        if(response['data'].length > 0 && response['data'][0]['location'] != null) {
+        if(response['data'].length > 0 && response['data'][0]['location'] !== null) {
           io.sockets.emit('photo', raw);
         } else {
           console.log("ERROR: %s", util.inspect(response['meta']));
@@ -86,5 +86,5 @@ app.post('/callback', function(request, response){
 
 // Run the app
 app.listen(port, function(){
-  console.log("Listening in port %d", port);
+  console.log("Listening on port %d", port);
 });
