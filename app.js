@@ -22,32 +22,19 @@ io.set('log level', 1);
 // Allow to parse the body of the POST requests
 app.use(express.bodyParser());
 
-// GET /style.css
-//   Render public/stylesheets/style.css
-app.get('/style.css', function(request, response){
-    response.writeHead(200, {'Content-Type': 'text/css'});
-    response.write(fs.readFileSync(__dirname + '/public/stylesheets/style.css', 'utf8'));
-    response.end();
-});
+// GET /public resources.css
+app.use("/public", express.static(__dirname + '/public'));
 
 // GET /
 //   Render index.html
 app.get('/', function(request, response){
-    console.log("gettimng index!!!", request);
+    console.log("getting index!!!");
     if(request.query["access_token"]) {
         console.log("got access token", request);
         userAccessToken = request.query["access_token"];
     }    
   response.writeHead(200, {'Content-Type': 'text/html'});
   response.write(fs.readFileSync('./index.html', 'utf8'));
-  response.end();
-});
-
-// GET /
-//   Render sub.html
-app.get('/sub.html', function(request, response){
-  response.writeHead(200, {'Content-Type': 'text/html'});
-  response.write(fs.readFileSync('./sub.html', 'utf8'));
   response.end();
 });
 
@@ -60,7 +47,7 @@ app.get('/callback', function(request, response){
   if(request.param("hub.challenge") !== null){
     response.send(request.param("hub.challenge"));
   } else {
-    console.log("ERROR on suscription request: %s", util.inspect(request));
+    console.log("ERROR on subscription request: %s", util.inspect(request));
   }
 });
 
@@ -185,7 +172,7 @@ io.sockets.on('connection', function (socket) {
       res.on('end', function() {
         var response = JSON.parse(raw);
         if(response['data'].length > 0 && response['data'][0]['id'] !== null) {    
-            fn(raw);  
+            fn(raw, doAwesomeThing);
         } else {
           console.log("ERROR: %s", util.inspect(response['meta']));
         }
