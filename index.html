@@ -10,14 +10,15 @@
   <script src="//maps.google.com/maps/api/js?sensor=false" type="text/javascript"></script>
   <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
-  <link type="text/css" rel="stylesheet" href="style.css" />
+  <link type="text/css" rel="stylesheet" href="public/stylesheets/style.css" />
 
   <script type="text/javascript">
     $(function() {
       window.client_id = '8f887b841c774e6cb9b8e5b7b3c9c663',
       window.host = 'http://instagram-demo-app.nodejitsu.com';
-      
-      //var host = 'http://localhost';
+//      window.host = 'http://localhost';
+
+
       var photos = [],
           socket = io.connect(window.host);
 		window.socket = socket;
@@ -37,13 +38,17 @@
       
       socket.on('connect', function () { 
           var accToken = getAccessToken();
-        socket.emit('getMyInstaData', accToken, function (myInstaData) {
-            var me = JSON.parse(myInstaData)['data'][0];
-            console.log("This is me ", me);
-            $('#profilePic').attr('src', me.profile_picture);
-            $('#profilePic').show();
-            $('#instaLoginButton').hide();
-        });
+	      if(accToken) {
+		      socket.emit('getMyInstaData', accToken, function (myInstaData, awesomeValue) {
+			      var me = JSON.parse(myInstaData)['data'][0];
+			      console.log("This is me ", me);
+			      console.log("Awesome things happenin'", awesomeValue);
+
+			      $('#profilePic').attr('src', me.profile_picture);
+			      $('#profilePic').show();
+			      $('#instaLoginButton').hide();
+		      });
+	      }
       });
       
 
