@@ -1,161 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
-  <title>Instagram Demo App</title>
-  <!--[if IE]>
-    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-  <![endif]-->
-  <script src="//maps.google.com/maps/api/js?sensor=false" type="text/javascript"></script>
-  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-  <script src="/socket.io/socket.io.js"></script>
-  <link type="text/css" rel="stylesheet" href="public/stylesheets/style.css" />
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+	<title>Instagram Demo App</title>
+	<!--[if IE]>
+	<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<script src="//maps.google.com/maps/api/js?sensor=false" type="text/javascript"></script>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<link type="text/css" rel="stylesheet" href="public/stylesheets/style.css"/>
 
-  <script type="text/javascript">
-    $(function() {
-      window.client_id = '8f887b841c774e6cb9b8e5b7b3c9c663',
-      window.host = 'http://instagram-demo-app.nodejitsu.com';
-//      window.host = 'http://localhost';
+	<script type="text/javascript">
+		$(document).ready(function () {
+			window.client_id = '8f887b841c774e6cb9b8e5b7b3c9c663',
+//			window.host = 'http://instagram-realtime-demo.gotomanners.c9.io';
+					window.host = 'http://local.gotomanners.com:3000';
 
 
-      var photos = [],
-          socket = io.connect(window.host);
-		window.socket = socket;
+			var photos = [],
+					socket = io.connect(window.host);
+			window.socket = socket;
 
-      socket.on('photo', function (raw) {
-        var photo = JSON.parse(raw)['data'][0];
-        photos.push(photo.link);
-        loadInfoWindow(photo);
-        setupMarker(photo);
-        $('h1 span').html('(' + photos.length + ' ' + (photos.length == 1 ? 'photo' : 'photos') + ')');
-        
-        var accToken = getAccessToken();
-        socket.emit('receivedPhoto', accToken, photo, function (data) {
-            console.log("Displayed and liked", data.id);
-        });
-      });
-      
-      socket.on('connect', function () { 
-          var accToken = getAccessToken();
-	      if(accToken) {
-		      socket.emit('getMyInstaData', accToken, function (myInstaData, awesomeValue) {
-			      var me = JSON.parse(myInstaData)['data'][0];
-			      console.log("This is me ", me);
-			      console.log("Awesome things happenin'", awesomeValue);
+			socket.on('photo', function (raw) {
+				var photo = JSON.parse(raw)['data'][0];
+				photos.push(photo.link);
+				loadInfoWindow(photo);
+				setupMarker(photo);
+				$('h1 span').html('(' + photos.length + ' ' + (photos.length == 1 ? 'photo' : 'photos') + ')');
 
-			      $('#profilePic').attr('src', me.profile_picture);
-			      $('#profilePic').show();
-			      $('#instaLoginButton').hide();
-		      });
-	      }
-      });
-      
+				socket.emit('receivedPhoto', photo, function (data) {
+					console.log("Displayed and liked", data.id);
+				});
+			});
 
-      function setupMarker(photo){
-        var position = new google.maps.LatLng(photo.location.latitude, photo.location.longitude);
-        map.setCenter(position);
-        var marker = new google.maps.Marker({ position:position,map:map,animation:google.maps.Animation.DROP,html:photo});
-        google.maps.event.addListener(marker, "click", function () {
-          loadInfoWindow(this.html);
-        });
-      }
+			socket.on('connect', function () {
+				var user = getUserFromLocalStorage();
+				socket.emit('getPhotoLikesToggleValue', function () {
+					console.log("Like* things happenin' now", data ? 'YES' : 'NO');
+					if (user) {
+						$('#profilePic').attr('src', user.profile_picture);
+						$('#profilePic').show();
+						$('#instaLoginButton').hide();
+					} else {
+						console.log("Not logged in......yet ;)");
+					}
+				});
+			});
 
-      function loadInfoWindow(photo){
-        var date = new Date(parseInt(photo.created_time)*1000),
-            formatedDate = date.getFullYear() + '-' + parseInt(date.getMonth()+1) + '-' + date.getDate() +
-                           ' ' + date.getUTCHours() + ':' + date.getUTCMinutes() + ':' + date.getUTCSeconds();
-        $('.item_data img').attr('src', photo.user.profile_picture);
-        $('.item_data p strong').html(photo.user.username);
-        $('.item_data span.date').html(formatedDate);
-        $('.item_data a').attr('href', photo.link);
-        $('.content.instagram').html('<img src="' + photo.images.low_resolution.url + '" />');
-        $('#content').show();
-      }
+			socket.on('authenticated_user', function (authData) {
+				var userData = JSON.parse(authData);
+				if (userData) {
+					var access_token = userData.access_token,
+							user = userData.user;
+					localStorage.setItem("instagram_user_access_token", JSON.stringify(access_token));
+					localStorage.setItem("instagram_logged_in_user", JSON.stringify(user));
+				}
+			});
 
-      var mapOptions = {
-        zoom: 15,
-        center: new google.maps.LatLng(53.345735,-6.257615),
-        disableDefaultUI: true,
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        styles: [
-          { stylers: [ { saturation: -65 }, { gamma: 1.52 } ] },
-          { featureType: "administrative", stylers: [ { saturation: -95 },{ gamma: 2.26 } ] },
-          { featureType: "water", elementType: "labels", stylers: [ { visibility: "off" } ] },
-          // Remove road names
-          { featureType: "road", stylers: [ { visibility: "simplified" }, { saturation: -99 }, { gamma: 2.22 } ] },
-          { featureType: "poi", elementType: "labels", stylers: [ { visibility: "off" },{ saturation: -55 } ] }
-        ]
-      };
+			var mapOptions = {
+				zoom:15,
+				center:new google.maps.LatLng(53.345735, -6.257615),
+				disableDefaultUI:true,
+				mapTypeId:google.maps.MapTypeId.ROADMAP,
+				styles:[
+					{ stylers:[
+						{ saturation:-65 },
+						{ gamma:1.52 }
+					] },
+					{ featureType:"administrative", stylers:[
+						{ saturation:-95 },
+						{ gamma:2.26 }
+					] },
+					{ featureType:"water", elementType:"labels", stylers:[
+						{ visibility:"off" }
+					] },
+					// Remove road names
+					{ featureType:"road", stylers:[
+						{ visibility:"simplified" },
+						{ saturation:-99 },
+						{ gamma:2.22 }
+					] },
+					{ featureType:"poi", elementType:"labels", stylers:[
+						{ visibility:"off" },
+						{ saturation:-55 }
+					] }
+				]
+			};
 
-      var map = new google.maps.Map(document.getElementById("map_container"), mapOptions);
-    });
-    
-    function authInstagram() {
-        window.location.href=
-        'https://instagram.com/oauth/authorize/?client_id='+window.client_id+'&redirect_uri='+window.host+'&scope=likes+comments&response_type=token'
-    }
-    
-    function toggleAwesomeThing() {
-        window.socket.emit('toggleAwesomeThing', function (data) {
-            console.log("Awesome things happenin'", data);
-        });
-    }
-    
-    function getAccessToken() {
-        var accToken;
-        if (window.location.hash) {
-            var tokenHash = location.hash.substr(1),
-            accToken = tokenHash.substr(tokenHash.indexOf('access_token=')).split('&')[0].split('=')[1];
-            localStorage.setItem("instagram_access_token", accToken);
-        } else {
-             accToken = localStorage.getItem("instagram_access_token");
-        }
-        return accToken;
-    }
-    
-    function getMyLikeCount() {
-        var accToken = getAccessToken();
-        if(accToken.length > 0) {
-            $.ajax({
-          url: "https://api.instagram.com/v1/users/self/media/liked?access_token=" + accToken,
-          type: "GET",
-          success: function(data) {
-            console.log(data);
-          }
-        });    
-        }
-    }
-  </script>
+			var map = new google.maps.Map(document.getElementById("map_container"), mapOptions);
+
+			//InstaAuthentication
+			$('#instaLoginButton').click(function () {
+				authInstagram();
+			});
+		});
+
+		function setupMarker(photo) {
+			var position = new google.maps.LatLng(photo.location.latitude, photo.location.longitude);
+			map.setCenter(position);
+			var marker = new google.maps.Marker({ position:position, map:map, animation:google.maps.Animation.DROP, html:photo});
+			google.maps.event.addListener(marker, "click", function () {
+				loadInfoWindow(this.html);
+			});
+		}
+
+		function loadInfoWindow(photo) {
+			var date = new Date(parseInt(photo.created_time) * 1000),
+					formatedDate = date.getFullYear() + '-' + parseInt(date.getMonth() + 1) + '-' + date.getDate() +
+							' ' + date.getUTCHours() + ':' + date.getUTCMinutes() + ':' + date.getUTCSeconds();
+			$('.item_data img').attr('src', photo.user.profile_picture);
+			$('.item_data p strong').html(photo.user.username);
+			$('.item_data span.date').html(formatedDate);
+			$('.item_data a').attr('href', photo.link);
+			$('.content.instagram').html('<img src="' + photo.images.low_resolution.url + '" />');
+			$('#content').show();
+		}
+
+		function authInstagram() {
+			var instaAuthURL = 'https://instagram.com/oauth/authorize/?client_id=' + window.client_id + '&redirect_uri=' + window.host + '/auth&scope=likes+comments&response_type=code'
+			window.location.href = instaAuthURL;
+
+		}
+
+		function togglePhotoLikes() {
+			window.socket.emit('togglePhotoLikes', function (data) {
+				console.log("Like* things happenin'", data);
+			});
+		}
+
+		function getAccessTokenFromLocalStorage() {
+			var accToken;
+			if (localStorage.getItem("instagram_user_access_token")) {
+				accToken = JSON.parse(localStorage.getItem("instagram_user_access_token"));
+			}
+			return accToken;
+		}
+
+		function getUserFromLocalStorage() {
+			var user;
+			if (localStorage.getItem("instagram_logged_in_user")) {
+				user = JSON.parse(localStorage.getItem("instagram_logged_in_user"));
+			}
+			return user;
+		}
+
+		function getMyLikeCount() {
+			var accToken = getAccessTokenFromLocalStorage();
+			if (accToken.length > 0) {
+				$.ajax({
+					url:"https://api.instagram.com/v1/users/self/media/liked?access_token=" + accToken,
+					type:"GET",
+					success:function (data) {
+						console.log(data);
+					}
+				});
+			}
+		}
+	</script>
 </head>
 <body>
 
 <header id="top_bar">
-    <button id="instaLoginButton" onclick="authInstagram()">LOGIN</button>
-    <img id="profilePic" width="42" height="42" style="display:none"/>
-    <h1>Dublin Instagram activity<span></span></h1>
-    <button id="awesomeToggleButton" onclick="toggleAwesomeThing()">Awesome Toggle</button>
+	<button id="instaLoginButton">LOGIN</button>
+	<img id="profilePic" width="42" height="42" style="display:none"/>
+
+	<h1>Dublin Instagram activity<span></span></h1>
+	<button id="togglePhotoLikesButton" onclick="togglePhotoLikes()">Awesome Toggle</button>
 </header>
 
 <div class="popover" id="content" style="display:none">
-  <div class="header">
-    <div class="item_data">
-      <img src="" alt="" class="avatar">
-      <p>
-        <strong></strong><br>
-        <span class="date"></span> · <a href="#" target="blank">#permalink</a>
-      </p>
-    </div>
-  </div>
-  <div class="instagram content"></div>
+	<div class="header">
+		<div class="item_data">
+			<img src="" alt="" class="avatar">
+
+			<p>
+				<strong></strong><br>
+				<span class="date"></span> · <a href="#" target="blank">#permalink</a>
+			</p>
+		</div>
+	</div>
+	<div class="instagram content"></div>
 </div>
 
 <div id="outer_map_container">
-  <div id="map_container"></div>
+	<div id="map_container"></div>
 </div>
 
 <div class="progress_bar">
-  <a href="https://github.com/gotomanners/instagram-realtime-demo" target="blank" style="display:none">Fork me on Github</a>
+	<a href="https://github.com/gotomanners/instagram-realtime-demo" target="blank" style="display:none">Fork me on
+		Github</a>
 </div>
 
 </body>
