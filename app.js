@@ -9,15 +9,17 @@ var app = express.createServer(),
 		port = (process.env.PORT || 3000);
 
 
-//var APP_URL = (process.env.IP || 'http://instagram-realtime-demo.gotomanners.c9.io'),
-var APP_URL = 'http://local.gotomanners.com:3000',
+var APP_URL = (process.env.IP || 'http://instagram-realtime-demo.gotomanners.c9.io'),
+//var APP_URL = 'http://gotomanners.no-ip.org:3000',
+//var APP_URL = 'http://instagram-demo-app.nodejitsu.com',
 		APP_CLIENT_ID = (process.env.APP_CLIENT_ID || '8f887b841c774e6cb9b8e5b7b3c9c663'),
 		APP_CLIENT_SECRET = (process.env.APP_CLIENT_SECRET || 'c04728a0a2a5417faa9ab9b59c914cc2'),
 		userAccessToken,
 		notificationsArray = [],
 		PHOTO_BATCH_SIZE = 1,
 		count = 0,
-		likePhotosEnabled = false;
+		likePhotosEnabled = false,
+		followPhotosEnabled = false;
 
 // Remove debug messages from socket.io
 io.set('log level', 1);
@@ -162,26 +164,46 @@ app.post('/callback', function (request, response) {
 io.sockets.on('connection', function (socket) {
 
 	// Change photo batch size
-	socket.on('changePhotoBatchSize', batchSize, function (fn) {
+	socket.on('changePhotoBatchSize', function (batchSize, fn) {
 		PHOTO_BATCH_SIZE = batchSize;
 		fn(PHOTO_BATCH_SIZE);
 	});
 
-	// ToggleLikenesss
+	// Toggle Likenesss
 	socket.on('togglePhotoLikes', function (fn) {
-		fn(!likePhotosEnabled)
-		l
+		likePhotosEnabled = !likePhotosEnabled;
+		console.log("setting photo likes value to", likePhotosEnabled);
+		fn(likePhotosEnabled);
+	});
+
+	// Get Like toggle status
+	socket.on('getTogglePhotoLikes', function (fn) {
+		console.log("getting photo likes value", likePhotosEnabled);
+		fn(likePhotosEnabled);
+	});
+
+	// Toggle Follownesss
+	socket.on('togglePhotoFollows', function (fn) {
+		followPhotosEnabled = !followPhotosEnabled;
+		console.log("setting photo follows value to", followPhotosEnabled);
+		fn(followPhotosEnabled);
+	});
+
+	// Get Follow toggle status
+	socket.on('getTogglePhotofollow', function (fn) {
+		console.log("getting photo follows value", followPhotosEnabled);
+		fn(followPhotosEnabled);
 	});
 
 	// Like Photos
-	socket.on('receivedPhoto', function (photo, fn) {
-		if (userAccessToken && likePhotosEnabled) {
+	socket.on('likePhoto', function (photoId, fn) {
+		if (likePhotosEnabled && userAccessToken !== undefined) {
 			var post_data = querystring.stringify({client_id:APP_CLIENT_ID,
 				access_token:userAccessToken});
 
 			var options = {
 				host:'api.instagram.com',
-				path:'/v1/media/' + photo.id + '/likes',
+				path:'/v1/media/' + photoId + '/likes',
 				method:'POST',
 				headers:{
 					'Content-Type':'application/x-www-form-urlencoded',
@@ -200,7 +222,7 @@ io.sockets.on('connection', function (socket) {
 				res.on('end', function () {
 					var response = JSON.parse(raw);
 					if (response['meta']['code'] === 200) {
-						fn(photo);
+						fn(photoId);
 					} else {
 						console.log("ERROR in LIKE: %s", util.inspect(response['meta']));
 					}
@@ -211,11 +233,42 @@ io.sockets.on('connection', function (socket) {
 		}
 	});
 
+	// Follow Photos
+	socket.on('followPhoto', function (userId, action, fn) {
+		if (followPhotosEnabled && userAccessToken !== undefined) { //TODO
+			var post_data = querystring.stringify({action:action,
+				access_token:userAccessToken});
 
-	// Get Profile Info
-	socket.on('getPhotoLikesToggleValue', function (fn) {
-		console.log("getting photo likes value", likePhotosEnabled);
-		fn(likePhotosEnabled);
+			var options = {
+				host:'api.instagram.com',
+				path:'/v1/users/' + userId + '/relationship',
+				method:'POST',
+				headers:{
+					'Content-Type':'application/x-www-form-urlencoded',
+					'Content-Length':post_data.length
+				}
+			};
+
+			var post_req = https.request(options, function (res) {
+				res.setEncoding('utf-8');
+				var raw = "";
+
+				res.on('data', function (chunk) {
+					raw += chunk;
+				});
+
+				res.on('end', function () {
+					var response = JSON.parse(raw);
+					if (response['meta']['code'] === 200) {
+						fn(userId);
+					} else {
+						console.log("ERROR in "+action+": %s", util.inspect(response['meta']));
+					}
+				});
+			});
+			post_req.write(post_data);
+			post_req.end();
+		}
 	});
 });
 

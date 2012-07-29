@@ -1,7 +1,7 @@
 {
   "name": "instagram-demo-app",
   "description": "Demo of Instagram API",
-  "version": "0.1.0-1",
+  "version": "0.1.0-25",
   "author": "Manners Oshafi",
   "dependencies": {
     "socket.io": "~0.9.6",
