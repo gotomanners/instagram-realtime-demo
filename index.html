@@ -16,15 +16,24 @@
 <body>
 
 <header id="top_bar">
-	<button id="instaLoginButton">LOGIN</button>
-	<img id="profilePic" width="42" height="42" style="display:none"/>
-	<span id="username"></span>
-	<button id="instaLogoutButton">LOGOUT</button>
+	<div class="floatLeft">
+		<button id="togglePhotoLikesButton">Awesome Toggle 1</button><br/>
+		<button id="togglePhotoFollowsButton">Awesome Toggle 2</button><br/>
+		<label for="batchSize" style="font-size: small;">Batches</label>
+		<input type="text" id="batchSize" name="batchSize" value="3" style="width: 20px;"/>
+		<button id="changePhotoBatchSize">Go</button>
+	</div>
+	<div class="floatRight">
+		<div class="floatLeft">
+			<img id="profilePic" width="42" height="42" style="display:none"/>
+		</div>
+		<div class="floatRight">
+			<span id="username" style="font-size: small;"></span><br/>
+			<button id="instaLoginButton" style="display: none">LOGIN</button>
+			<button id="instaLogoutButton" style="display: none">LOGOUT</button>
+		</div>
+	</div>
 	<h1>Dublin Instagram activity<span></span></h1>
-	<button id="togglePhotoLikesButton">Awesome Toggle 1</button>
-	<button id="togglePhotoFollowsButton">Awesome Toggle 2</button>
-	<input type="text" id="batchSize" name="batchSize" value="3" style="width: 20px;"/>
-	<button id="changePhotoBatchSize">Photo Batch Set</button>
 </header>
 
 <div class="popover" id="content" style="display:none">

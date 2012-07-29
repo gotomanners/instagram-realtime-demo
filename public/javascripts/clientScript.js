@@ -58,8 +58,10 @@ $(document).ready(function() {
 			$('#profilePic').attr('src', user.profile_picture);
 			$('#profilePic').show();
 			$('#instaLoginButton').hide();
+			$('#instaLogoutButton').show();
 		} else {
 			console.log("Not logged in......yet ;)");
+			$('#instaLoginButton').show();
 			$('#instaLogoutButton').hide();
 		}
 	});

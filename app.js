@@ -9,9 +9,9 @@ var app = express.createServer(),
 		port = (process.env.PORT || 3000);
 
 
-var APP_URL = (process.env.IP || 'http://instagram-realtime-demo.gotomanners.c9.io'),
+//var APP_URL = (process.env.IP || 'http://instagram-realtime-demo.gotomanners.c9.io'),
 //var APP_URL = 'http://gotomanners.no-ip.org:3000',
-//var APP_URL = 'http://instagram-demo-app.nodejitsu.com',
+var APP_URL = 'http://instagram-demo-app.nodejitsu.com',
 		APP_CLIENT_ID = (process.env.APP_CLIENT_ID || '8f887b841c774e6cb9b8e5b7b3c9c663'),
 		APP_CLIENT_SECRET = (process.env.APP_CLIENT_SECRET || 'c04728a0a2a5417faa9ab9b59c914cc2'),
 		userAccessToken,
