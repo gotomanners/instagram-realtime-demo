@@ -24,20 +24,21 @@ var APP_URL = 'http://instagram-demo-app.nodejitsu.com',
 // Remove debug messages from socket.io
 io.set('log level', 1);
 
-// GET static resources in /public
+// use static resources in / && /public directories
 app.use("/public", express.static(__dirname + '/public'));
+app.use("/", express.static(__dirname + '/'));
 
 // Allow to parse the body of the POST requests
 app.use(express.bodyParser());
 
-/*   GET /
- *   Render index.html
- */
-app.get('/', function (request, response) {
-	response.writeHead(200, {'Content-Type':'text/html'});
-	response.write(fs.readFileSync('./index.html', 'utf8'));
-	response.end();
-});
+///*   GET /
+// *   Render index.html
+// */
+//app.get('/', function (request, response) {
+//	response.writeHead(200, {'Content-Type':'text/html'});
+//	response.write(fs.readFileSync('./index.html', 'utf8'));
+//	response.end();
+//});
 
 /*   GET /auth
  *   if params.code is present, then exchange that for the user access_token
