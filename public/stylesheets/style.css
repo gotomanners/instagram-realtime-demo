@@ -777,7 +777,9 @@ span.cartodb_map_controls a.cartodb_map_embed_zoom_out:hover {
 }
 
 div#outer_map_container {
-	/*position: absolute;*/
+	position: absolute;
+	top: 0;
+	left: 0;
 	width: 100%;
 	height: 100%;
 	background: #FFF;
@@ -789,6 +791,15 @@ div#map_container {
 	top: 0;
 	left: 0;
 	z-index: 0;
+	width: 100%;
+	height: 100%;
+}
+
+div#pano_container {
+	position: absolute;
+	top: 50%;
+	left: 0;
+	z-index: -1;
 	width: 100%;
 	height: 100%;
 }

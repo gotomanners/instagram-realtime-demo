@@ -1,7 +1,7 @@
 {
   "name": "instagram-demo-app",
   "description": "Demo of Instagram API",
-  "version": "0.1.0-28",
+  "version": "0.1.0-41",
   "author": "Manners Oshafi",
   "dependencies": {
     "socket.io": "~0.9.6",
@@ -9,10 +9,13 @@
   },
   "devDependencies": {},
   "subdomain": "instagram-demo-app",
+  "domains": [
+    "instamap.gotomanners.com"
+  ],
   "scripts": {
     "start": "app.js"
   },
   "engines": {
-    "node": "0.6.x"
+    "node": "0.8.x"
   }
 }

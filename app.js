@@ -10,8 +10,8 @@ var app = express.createServer(),
 
 
 //var APP_URL = (process.env.IP || 'http://instagram-realtime-demo.gotomanners.c9.io'),
-//var APP_URL = 'http://gotomanners.no-ip.org:3000',
-var APP_URL = 'http://instagram-demo-app.nodejitsu.com',
+var APP_URL = 'http://instamap.gotomanners.com',
+//var APP_URL = 'http://instagram-demo-app.nodejitsu.com',
 		APP_CLIENT_ID = (process.env.APP_CLIENT_ID || '8f887b841c774e6cb9b8e5b7b3c9c663'),
 		APP_CLIENT_SECRET = (process.env.APP_CLIENT_SECRET || 'c04728a0a2a5417faa9ab9b59c914cc2'),
 		userAccessToken,
@@ -19,7 +19,8 @@ var APP_URL = 'http://instagram-demo-app.nodejitsu.com',
 		PHOTO_BATCH_SIZE = 1,
 		count = 0,
 		likePhotosEnabled = false,
-		followPhotosEnabled = false;
+		followPhotosEnabled = false,
+		subscriptionIds = [];
 
 // Remove debug messages from socket.io
 io.set('log level', 1);
@@ -47,7 +48,7 @@ app.get('/auth', function (request, response) {
 	if (request.param("code") !== null) {
 //		response.send(request.param("code"));
 
-		var post_data = querystring.stringify({
+		var req_body = querystring.stringify({
 			client_id:APP_CLIENT_ID,
 			client_secret:APP_CLIENT_SECRET,
 			grant_type:'authorization_code',
@@ -60,7 +61,7 @@ app.get('/auth', function (request, response) {
 			method:'POST',
 			headers:{
 				'Content-Type':'application/x-www-form-urlencoded',
-				'Content-Length':post_data.length
+				'Content-Length':req_body.length
 			}
 		};
 
@@ -79,14 +80,17 @@ app.get('/auth', function (request, response) {
 					console.log("got access token for", userData.user.username, userAccessToken);
 					io.sockets.emit('authenticated_user', raw);
 
+					console.log("emitted to authenticated_user", raw);
 					//All done, back to homepage
-					response.redirect(APP_URL);
+					setTimeout(function() {
+						response.redirect(APP_URL);
+					}, 2000);
 				} else {
 					console.log("ERROR retrieving access_token: %s", util.inspect(userData));
 				}
 			});
 		});
-		post_req.write(post_data);
+		post_req.write(req_body);
 		post_req.end();
 
 	} else {
@@ -104,12 +108,12 @@ app.get('/callback', function (request, response) {
 	if (request.param("hub.challenge") !== null) {
 		response.send(request.param("hub.challenge"));
 	} else {
-		console.log("ERROR on subscription request: %s", util.inspect(request));
+		console.log("ERROR on subscription request /callback: %s", util.inspect(request));
 	}
 });
 
 // POST /callback
-//   Receives POST nofications with the geometries updated
+//   Receives POST notifications with the geometries updated
 //   Each notification contains a geography_id, which is
 //   the identifier of the geography that has a new photo.
 //   It's necessary to perform another API call to get the last
@@ -166,14 +170,15 @@ io.sockets.on('connection', function (socket) {
 
 	// Change photo batch size
 	socket.on('changePhotoBatchSize', function (batchSize, fn) {
+		console.log("setting batch size to", batchSize);
 		PHOTO_BATCH_SIZE = batchSize;
 		fn(PHOTO_BATCH_SIZE);
 	});
 
 	// Toggle Likenesss
-	socket.on('togglePhotoLikes', function (fn) {
-		likePhotosEnabled = !likePhotosEnabled;
-		console.log("setting photo likes value to", likePhotosEnabled);
+	socket.on('togglePhotoLikes', function (value, fn) {
+		console.log("toggling photo likes value from", likePhotosEnabled,"to", value);
+		likePhotosEnabled = value;
 		fn(likePhotosEnabled);
 	});
 
@@ -184,14 +189,14 @@ io.sockets.on('connection', function (socket) {
 	});
 
 	// Toggle Follownesss
-	socket.on('togglePhotoFollows', function (fn) {
-		followPhotosEnabled = !followPhotosEnabled;
-		console.log("setting photo follows value to", followPhotosEnabled);
+	socket.on('togglePhotoFollows', function (value, fn) {
+		console.log("toggling photo follows value from", followPhotosEnabled, "to", value);
+		followPhotosEnabled = value;
 		fn(followPhotosEnabled);
 	});
 
 	// Get Follow toggle status
-	socket.on('getTogglePhotofollow', function (fn) {
+	socket.on('getTogglePhotoFollows', function (fn) {
 		console.log("getting photo follows value", followPhotosEnabled);
 		fn(followPhotosEnabled);
 	});
@@ -199,7 +204,7 @@ io.sockets.on('connection', function (socket) {
 	// Like Photos
 	socket.on('likePhoto', function (photoId, fn) {
 		if (likePhotosEnabled && userAccessToken !== undefined) {
-			var post_data = querystring.stringify({client_id:APP_CLIENT_ID,
+			var req_body = querystring.stringify({client_id:APP_CLIENT_ID,
 				access_token:userAccessToken});
 
 			var options = {
@@ -208,7 +213,7 @@ io.sockets.on('connection', function (socket) {
 				method:'POST',
 				headers:{
 					'Content-Type':'application/x-www-form-urlencoded',
-					'Content-Length':post_data.length
+					'Content-Length':req_body.length
 				}
 			};
 
@@ -223,21 +228,22 @@ io.sockets.on('connection', function (socket) {
 				res.on('end', function () {
 					var response = JSON.parse(raw);
 					if (response['meta']['code'] === 200) {
+						console.log("liked", photoId);
 						fn(photoId);
 					} else {
 						console.log("ERROR in LIKE: %s", util.inspect(response['meta']));
 					}
 				});
 			});
-			post_req.write(post_data);
+			post_req.write(req_body);
 			post_req.end();
 		}
 	});
 
 	// Follow Photos
 	socket.on('followPhoto', function (userId, action, fn) {
-		if (followPhotosEnabled && userAccessToken !== undefined) { //TODO
-			var post_data = querystring.stringify({action:action,
+		if (followPhotosEnabled && userAccessToken !== undefined) {
+			var req_body = querystring.stringify({action:action,
 				access_token:userAccessToken});
 
 			var options = {
@@ -246,7 +252,7 @@ io.sockets.on('connection', function (socket) {
 				method:'POST',
 				headers:{
 					'Content-Type':'application/x-www-form-urlencoded',
-					'Content-Length':post_data.length
+					'Content-Length':req_body.length
 				}
 			};
 
@@ -261,13 +267,146 @@ io.sockets.on('connection', function (socket) {
 				res.on('end', function () {
 					var response = JSON.parse(raw);
 					if (response['meta']['code'] === 200) {
+						console.log("followed", userId);
 						fn(userId);
 					} else {
 						console.log("ERROR in "+action+": %s", util.inspect(response['meta']));
 					}
 				});
 			});
-			post_req.write(post_data);
+			post_req.write(req_body);
+			post_req.end();
+		}
+	});
+
+	// Add Geo subscription
+	socket.on('instaSubscribe', function (lat, lng, fn) {
+		if (userAccessToken !== undefined) {
+			var req_body = querystring.stringify({
+				client_id:APP_CLIENT_ID,
+				client_secret:APP_CLIENT_SECRET,
+				object:'geography',
+				aspect:'media',
+				lat:lat,
+				lng:lng,
+				radius:'5000',
+				callback_url:APP_URL + '/callback'
+			});
+
+			var options = {
+				host:'api.instagram.com',
+				path:'/v1/subscriptions',
+				method:'POST',
+				headers:{
+					'Content-Type':'application/x-www-form-urlencoded',
+					'Content-Length':req_body.length
+				}
+			};
+
+			var post_req = https.request(options, function (res) {
+				res.setEncoding('utf-8');
+				var raw = "";
+
+				res.on('data', function (chunk) {
+					raw += chunk;
+				});
+
+				res.on('end', function () {
+					var response = JSON.parse(raw);
+					if (response['meta']['code'] === 200) {
+						console.log("subscribed to", response.data.id);
+						subscriptionIds.push(response.data.id);
+						fn(response.data.id);
+					} else {
+						console.log("ERROR in add subscription", util.inspect(response['meta']));
+					}
+				});
+			});
+			post_req.write(req_body);
+			post_req.end();
+		}
+	});
+
+	// List all subscriptions
+	socket.on('listSubscription', function(fn){
+		if(userAccessToken !== undefined) {
+		var req_body = querystring.stringify({
+			client_secret:APP_CLIENT_SECRET,
+			client_id:APP_CLIENT_ID
+		});
+
+		var options = {
+			host:'api.instagram.com',
+			path:'/v1/subscriptions?'+req_body,
+			method:'GET',
+			headers:{
+				'Content-Type':'application/x-www-form-urlencoded'
+//					'Content-Length':req_body.length
+			}
+		};
+
+		var post_req = https.request(options, function (res) {
+			res.setEncoding('utf-8');
+			var raw = "";
+
+			res.on('data', function (chunk) {
+				raw += chunk;
+			});
+
+			res.on('end', function () {
+				var response = JSON.parse(raw);
+				if (response['meta']['code'] === 200) {
+					console.log("Listing all subs", response);
+					fn(response);
+				} else {
+					console.log("ERROR in list subscription", util.inspect(response['meta']));
+				}
+			});
+		});
+		post_req.write(querystring.stringify({}));
+		post_req.end();
+		}
+	});
+
+	// Delete all subscriptions
+	socket.on('deleteSubscription', function (object, fn) {
+		if (userAccessToken !== undefined) {
+			var req_body = querystring.stringify({
+				id:object,
+				object:object,
+				client_secret:APP_CLIENT_SECRET,
+				client_id:APP_CLIENT_ID
+			});
+
+			var options = {
+				host:'api.instagram.com',
+				path:'/v1/subscriptions?'+req_body,
+				method:'DELETE',
+				headers:{
+					'Content-Type':'application/x-www-form-urlencoded'
+//					'Content-Length':req_body.length
+				}
+			};
+
+			var post_req = https.request(options, function (res) {
+				res.setEncoding('utf-8');
+				var raw = "";
+
+				res.on('data', function (chunk) {
+					raw += chunk;
+				});
+
+				res.on('end', function () {
+					var response = JSON.parse(raw);
+					if (response['meta']['code'] === 200) {
+						console.log("Deleted all subs", response);
+						fn(response);
+					} else {
+						console.log("ERROR in delete subscription", util.inspect(response['meta']));
+					}
+				});
+			});
+			post_req.write(querystring.stringify({}));
 			post_req.end();
 		}
 	});
