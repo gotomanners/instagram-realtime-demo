@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<title>Instagram Real-time Map Viewer</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 	<meta name="description" content="">
 	<meta name="author" content="">
 
@@ -41,10 +41,24 @@
 				<span class="icon-bar"></span>
 				<span class="icon-bar"></span>
 			</a>
-			<a class="brand" href="#">Instagram Real-time Map Viewer</a>
-			<div class="btn-group pull-right">
-				<a id="topBarSettingsButton-main" class="btn" data-toggle="modal" href="#settingsModal" style="display:
-				 none">
+			<a class="brand" href="#">InstaMap</a>
+			<div class="pull-left hidden-desktop">
+				<ul class="nav">
+					<!--<li class=""><a id="reset" href="#"><i class="icon-refresh"></i> Reset</a></li>-->
+					<li>
+						<form class="navbar-search pull-left" id="topBarPlaceSearchForm-mobile" autocomplete="off">
+							<input id="topBarPlaceSearchText-mobile" type="text" class="search-query span1"
+							       placeholder="Lookup a place to view photos"/>
+						</form>
+					</li>
+					<li class="hidden-phone"><a>OR</a></li>
+					<li>
+						<button id="myLocation-mobile" class="btn"><i class="icon-screenshot"></i></button>
+					</li>
+				</ul>
+			</div>
+			<div class="btn-group pull-right hidden-phone">
+				<a id="topBarSettingsButton-main" class="btn" data-toggle="modal" href="#settingsModal" style="display:none">
 					<i class="icon-cog"></i> Settings
 				</a>
 				<a id="instaLoginButton-main" class="btn" href="#" style="display: none">
@@ -65,6 +79,16 @@
 				<ul class="nav">
 					<li class=""><a href="/"><i class="icon-home"></i> Home</a></li>
 					<li class=""><a id="reset" href="#"><i class="icon-refresh"></i> Reset</a></li>
+					<li class="hidden-phone">
+						<form class="navbar-search pull-left" id="topBarPlaceSearchForm-main" autocomplete="off">
+						<input id="topBarPlaceSearchText-main" type="text" class="search-query"
+						       placeholder="Lookup a place to view photos"/>
+						</form>
+					</li>
+					<li class="hidden-phone"><a>OR</a></li>
+					<li class="hidden-phone">
+						<button id="myLocation-main" class="btn"><i class="icon-screenshot"></i> Here</button>
+					</li>
 				</ul>
 				<ul class="nav hidden-desktop">
 					<li><a id="instaLoginButton-sub" class="" href="#">
@@ -77,15 +101,7 @@
 						<i class="icon-lock"></i> Sign Out
 					</a></li>
 				</ul>
-				<form class="navbar-search pull-left" id="topBarPlaceSearchForm" autocomplete="off">
-					<input id="topBarPlaceSearchText" type="text" class="search-query"
-					       placeholder="Lookup a place to view insta shots"/>
-				</form>
-				<ul class="nav">
-					<li class="hidden-phone hidden-tablet"><a>OR</a></li>
-					<li><button id="myLocation" class="btn"><i class="icon-screenshot"></i> Here</button>
-					</li>
-				</ul>
+
 			</div><!--/.nav-collapse -->
 		</div>
 	</div>
@@ -93,8 +109,8 @@
 
 <div class="container">
 	<div class="row-fluid">
-		<div class="span12 ">
-			<div class="row">
+		<div class="span12">
+			<!--<div class="row">-->
 				<div class="popover hide" id="content">
 					<div class="header">
 						<div class="item_data">
@@ -109,10 +125,10 @@
 				</div>
 
 				<div id="outer_map_container">
-					<div id="map_container"></div>
-					<div id="pano_container"></div>
+					<div id="map_container" class="span12"></div>
+					<!--<div id="pano_container" class="span10"></div>-->
 				</div>
-			</div><!--/row-->
+			<!--</div>&lt;!&ndash;/row&ndash;&gt;-->
 		</div><!--/span-->
 	</div><!--/row-->
 
@@ -149,12 +165,26 @@
 								<p class="help-block">Automatically follow users as they upload photos</p>
 							</div>
 						</div>
-						<div class="control-group">
+						<div class="control-group hide">
 							<label class="control-label" for="batchSize">Batch Size</label>
 							<div class="controls">
 								<input type="text" class="span1" id="batchSize" value="3">
 								<p class="help-block">Number of photos to pop onto the grid as they become
 									available</p>
+							</div>
+						</div>
+						<div class="control-group">
+							<label class="control-label" for="listAllSubs">List All Subs</label>
+							<div class="controls">
+								<button class="btn" id="listAllSubs">List All Subs</button>
+								<p class="help-block">List all geo subscriptions</p>
+							</div>
+						</div>
+						<div class="control-group">
+							<label class="control-label" for="clearAllSubs">Clear All Subs</label>
+							<div class="controls">
+								<button class="btn" id="clearAllSubs">Clear All Subs</button>
+								<p class="help-block">Clear all geo subscriptions</p>
 							</div>
 						</div>
 					</fieldset>

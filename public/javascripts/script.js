@@ -29,11 +29,10 @@ GotomannersInstaViewer = (function(host, socket) {
 			}
 		},
 		streetViewZIndexValue = -1,
-		streetViewService = new google.maps.StreetViewService(),
+//		streetViewService = new google.maps.StreetViewService(),
 		markersArray = [],
 		geocoder = new google.maps.Geocoder(),
 		photos = [];
-//		socket = io.connect(host);
 
 	var getMap = function(mapOptions) {
 		if(mapOptions) {
@@ -53,16 +52,17 @@ GotomannersInstaViewer = (function(host, socket) {
 		return new google.maps.StreetViewPanorama(document.getElementById("pano_container"), panoramaOptions);
 	};
 
-	var map = getMap(),
-		panorama = getPanorama();
+	var map = getMap();
+//		panorama = getPanorama();
 
 	var toggleStreetView = function(speed,fn) {
-		streetViewZIndexValue *= -1;
-		return $('#pano_container').animate({
-			'z-index' : streetViewZIndexValue
-		},speed || 400,function() {
-			$.isFunction(fn) && fn.call(this);
-		});
+//		streetViewZIndexValue *= -1;
+//		return $('#pano_container').animate({
+//			'z-index' : streetViewZIndexValue
+//		},speed || 400,function() {
+//			$.isFunction(fn) && fn.call(this);
+//		});
+		fn();
 	};
 
 	var setupMarker = function(map, photo){
@@ -78,9 +78,9 @@ GotomannersInstaViewer = (function(host, socket) {
 			position: position
 		},  marker = addMarker(markerOptions);
 		google.maps.event.addListener(marker, "click", function () {
-			panorama = getPanorama(panoramaOptions);
+//			panorama = getPanorama(panoramaOptions);
 			toggleMarkerBounce(this);
-			streetViewService.getPanoramaByLocation(event.latLng, 100, processSVData);
+//			streetViewService.getPanoramaByLocation(event.latLng, 100, processSVData);
 			toggleStreetView(400, function(){
 				toggleMarkerBounce(marker);
 			});
@@ -209,13 +209,13 @@ GotomannersInstaViewer = (function(host, socket) {
 						marker = addMarker(markerOptions);
 
 					addSubscription(results[0].geometry.location, function(res) {
-						console.log("You are now looking at"+ address + "here is your id"+ res);
+						console.log("You are now looking at "+ address + " here is your id "+ res);
 					});
 
 					google.maps.event.addListener(marker, "click", function (event) {
-						panorama = getPanorama(panoramaOptions);
+//						panorama = getPanorama(panoramaOptions);
 						toggleMarkerBounce(this);
-						streetViewService.getPanoramaByLocation(event.latLng, 100, processSVData);
+//						streetViewService.getPanoramaByLocation(event.latLng, 100, processSVData);
 						toggleStreetView(400, function() {
 							toggleMarkerBounce(marker);
 						});
@@ -273,12 +273,12 @@ GotomannersInstaViewer = (function(host, socket) {
 				geocodeLatLng(coords, function(marker, result) {
 					console.log("Address is", result.formatted_address);
 					addSubscription(coords, function(res) {
-						console.log("You are now looking at"+ result.formatted_address+ "here is your id"+ res);
+						console.log("You are now looking at "+ result.formatted_address+ " here is your id"+ res);
 					});
 					google.maps.event.addListener(marker, "click", function (event) {
-						panorama = getPanorama(panoramaOptions);
+//						panorama = getPanorama(panoramaOptions);
 						toggleMarkerBounce(this);
-						streetViewService.getPanoramaByLocation(event.latLng, 100, processSVData);
+//						streetViewService.getPanoramaByLocation(event.latLng, 100, processSVData);
 						toggleStreetView(400, function() {
 							toggleMarkerBounce(marker);
 						});
@@ -347,7 +347,7 @@ GotomannersInstaViewer = (function(host, socket) {
 	};
 
 	var addSubscription = function(position, callback) {
-		socket.emit('instaSubscribe', position.lat(), position.lng(), function (data) {
+		socket.emit('addSubscription', position.lat(), position.lng(), function (data) {
 			if(data) {
 				callback(data);
 			} else {
@@ -357,23 +357,45 @@ GotomannersInstaViewer = (function(host, socket) {
 		});
 	};
 
-	var listSubscription = function(callback) {
-		socket.emit('listSubscription', function (data) {
+	var listAllSubscriptions = function(callback) {
+		socket.emit('listAllSubscriptions', function (data) {
 			if(data) {
 				callback(data);
 			} else {
-				console.log("ERROR :: Response to list subscription", data);
+				console.log("ERROR :: Response to list all subscriptions", data);
 
 			}
 		});
 	};
 
-	var deleteSubscription = function(object, callback) {
-		socket.emit('deleteSubscription', object, function (data) {
+	var listMySubscriptions = function(callback) {
+		socket.emit('listMySubscriptions', function (data) {
 			if(data) {
 				callback(data);
 			} else {
-				console.log("ERROR :: Response to delete subscription", data);
+				console.log("ERROR :: Response to list my subscriptions", data);
+
+			}
+		});
+	};
+
+	var deleteAllSubscriptions = function(object, callback) {
+		socket.emit('deleteAllSubscriptions', object, function (data) {
+			if(data) {
+				callback(data);
+			} else {
+				console.log("ERROR :: Response to delete subscriptions", data);
+
+			}
+		});
+	};
+
+	var deleteMySubscriptions = function(callback) {
+		socket.emit('deleteMySubscriptions', function (data) {
+			if(data) {
+				callback(data);
+			} else {
+				console.log("ERROR :: Response to delete my subscriptions", data);
 
 			}
 		});
@@ -456,8 +478,10 @@ GotomannersInstaViewer = (function(host, socket) {
 		saveSettings : saveSettings,
 		getCurrentLocation : getBrowserLocation,
 		geocodeAddress : geocodeAddress,
-		listSubs : listSubscription,
-		clearSubs : deleteSubscription,
+		listAllSubs : listAllSubscriptions,
+		listMySubs : listMySubscriptions,
+		clearSubs : deleteAllSubscriptions,
+		clearMySubs : deleteMySubscriptions,
 		clearScreen : clearScreen,
 		callbackOnPhoto : callbackOnPhoto,
 		callbackOnConnect : callbackOnConnect,

@@ -1,11 +1,13 @@
 {
   "name": "instagram-demo-app",
   "description": "Demo of Instagram API",
-  "version": "0.1.0-41",
+  "version": "0.1.0-43",
   "author": "Manners Oshafi",
   "dependencies": {
-    "socket.io": "~0.9.6",
-    "express": "~2.5.8"
+    "socket.io": "0.9.10",
+    "express": "3.0.0rc3",
+    "connect": "2.4.3",
+    "cookie": "0.0.4"
   },
   "devDependencies": {},
   "subdomain": "instagram-demo-app",

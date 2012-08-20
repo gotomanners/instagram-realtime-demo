@@ -1,6 +1,6 @@
 $(document).ready(function() {
-	var host = 'http://instamap.gotomanners.com',
-//	var	host = 'http://instagram-demo-app.nodejitsu.com',
+//	var host = 'http://gotomanners.dyndns.org:3000',
+	var	host = 'http://instamap.gotomanners.com',
 		socket = io.connect(host);
 
 	var g2mInstaViewer = new GotomannersInstaViewer(host, socket);
@@ -23,25 +23,38 @@ $(document).ready(function() {
 		e.preventDefault();
 	});
 
-	$('#reset').click(function() {
-		g2mInstaViewer.listSubs(function(data) {
-			console.log("Listing subs", data);
+	$('#listAllSubs').click(function() {
+		g2mInstaViewer.listAllSubs(function(data) {
+			console.log("Listing all subs", data);
 		});
+	});
+
+	$('#clearAllSubs').click(function() {
 		g2mInstaViewer.clearSubs('all', function(data) {
-			console.log("Clearing subs", data);
+			console.log("Clearing all subs", data);
 		});
 		g2mInstaViewer.clearScreen();
 	});
 
-	$('#topBarPlaceSearchForm').submit(function(e) {
+	$('#reset').click(function() {
+		g2mInstaViewer.listMySubs(function(data) {
+			console.log("Listing my subs", data);
+		});
+		g2mInstaViewer.clearMySubs(function(data) {
+			console.log("Clearing my subs", data);
+		});
+		g2mInstaViewer.clearScreen();
+	});
+
+	$('[id^=topBarPlaceSearchForm-]').submit(function(e) {
 		e.preventDefault();
-		var address = $('#topBarPlaceSearchText').val();
+		var address = e.target.children[0].value;
 		g2mInstaViewer.geocodeAddress(address, function(result) {
 			console.log(result);
 		});
 	});
 
-	$('#myLocation').click(function() {
+	$('[id^=myLocation-]').click(function() {
 		g2mInstaViewer.getCurrentLocation();
 	});
 
