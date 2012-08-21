@@ -68,11 +68,14 @@ GotomannersInstaViewer = (function(host, socket) {
 	var setupMarker = function(map, photo){
 		var position = new google.maps.LatLng(photo.location.latitude, photo.location.longitude);
 		map.setCenter(position);
+		var markerIcon = new google.maps.MarkerImage(photo.images.thumbnail.url, null, null, null, new google.maps.Size(40, 40));
 		var markerOptions = {
 			map: map,
 			position:position,
 			animation:google.maps.Animation.DROP,
-			html:photo
+			html:photo,
+			icon:markerIcon,
+			draggable:true
 		};
 		var panoramaOptions = {
 			position: position
@@ -467,8 +470,8 @@ GotomannersInstaViewer = (function(host, socket) {
 			console.log("DL'd", data);
 		});
 
-		socket.emit('followPhoto', photo.user.id, 'follow', function (data) {
-			console.log("DF'd", data);
+		socket.emit('followPhoto', photo.user.id, 'follow', function (status, data) {
+			console.log("DF'd", status, data);
 		});
 	};
 

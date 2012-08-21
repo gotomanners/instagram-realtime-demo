@@ -396,8 +396,21 @@ io.sockets.on('connection', function (socket) {
 				res.on('end', function () {
 					var rawJSON = JSON.parse(raw);
 					if (rawJSON['meta']['code'] === 200) {
-						console.log("followed", userId);
-						fn(userId);
+						var status = rawJSON.data.outgoing_status;
+						switch (status) {
+							case"follows":
+								console.log("Now Following", userId);
+								fn("Already Following", userId);
+								break;
+							case"none":
+								console.log("Followed", userId);
+								fn("Followed", userId);
+								break;
+							case"requested":
+								console.log("Requested Following", userId);
+								fn("Requested", userId);
+								break;
+						}
 					} else {
 						console.log("ERROR in "+action+": %s", util.inspect(rawJSON['meta']));
 					}
